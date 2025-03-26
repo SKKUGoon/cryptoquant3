@@ -6,8 +6,8 @@ import (
 	"net/http"
 )
 
-// Exchange: Receives exchange information from the API request
-type Exchange struct {
+// SpotExchange: Receives exchange information from the API request
+type SpotExchange struct {
 	Timezone   string `json:"timezone"`
 	ServerTime int64  `json:"serverTime"`
 	RateLimits []struct {
@@ -16,38 +16,38 @@ type Exchange struct {
 		IntervalNum   int    `json:"intervalNum"`
 		Limit         int    `json:"limit"`
 	} `json:"rateLimits"`
-	ExchangeFilters []any                  `json:"exchangeFilters"`
-	Symbols         []SymbolInfo           `json:"symbols"`
-	symbolsMap      map[string]*SymbolInfo `json:"-"` // -: ignore this field during JSON marshaling
+	ExchangeFilters []any                      `json:"exchangeFilters"`
+	Symbols         []SpotSymbolInfo           `json:"symbols"`
+	symbolsMap      map[string]*SpotSymbolInfo `json:"-"` // -: ignore this field during JSON marshaling
 }
 
-type SymbolInfo struct {
-	Symbol                          string         `json:"symbol"`
-	Status                          string         `json:"status"`
-	BaseAsset                       string         `json:"baseAsset"`
-	BaseAssetPrecision              int            `json:"baseAssetPrecision"`
-	QuoteAsset                      string         `json:"quoteAsset"`
-	QuotePrecision                  int            `json:"quotePrecision"`      // Deprecated
-	QuoteAssetPrecision             int            `json:"quoteAssetPrecision"` // Notify k decimal places
-	BaseCommissionPrecision         int            `json:"baseCommissionPrecision"`
-	QuoteCommissionPrecision        int            `json:"quoteCommissionPrecision"`
-	OrderTypes                      []string       `json:"orderTypes"`
-	IcebergAllowed                  bool           `json:"icebergAllowed"`
-	OcoAllowed                      bool           `json:"ocoAllowed"`
-	OtoAllowed                      bool           `json:"otoAllowed"`
-	QuoteOrderQtyMarketAllowed      bool           `json:"quoteOrderQtyMarketAllowed"`
-	AllowTrailingStop               bool           `json:"allowTrailingStop"`
-	CancelReplaceAllowed            bool           `json:"cancelReplaceAllowed"`
-	IsSpotTradingAllowed            bool           `json:"isSpotTradingAllowed"`
-	IsMarginTradingAllowed          bool           `json:"isMarginTradingAllowed"`
-	Filters                         []SymbolFilter `json:"filters"`
-	Permissions                     []any          `json:"permissions"`
-	PermissionSets                  [][]string     `json:"permissionSets"`
-	DefaultSelfTradePreventionMode  string         `json:"defaultSelfTradePreventionMode"`
-	AllowedSelfTradePreventionModes []string       `json:"allowedSelfTradePreventionModes"`
+type SpotSymbolInfo struct {
+	Symbol                          string             `json:"symbol"`
+	Status                          string             `json:"status"`
+	BaseAsset                       string             `json:"baseAsset"`
+	BaseAssetPrecision              int                `json:"baseAssetPrecision"`
+	QuoteAsset                      string             `json:"quoteAsset"`
+	QuotePrecision                  int                `json:"quotePrecision"`      // Deprecated
+	QuoteAssetPrecision             int                `json:"quoteAssetPrecision"` // Notify k decimal places
+	BaseCommissionPrecision         int                `json:"baseCommissionPrecision"`
+	QuoteCommissionPrecision        int                `json:"quoteCommissionPrecision"`
+	OrderTypes                      []string           `json:"orderTypes"`
+	IcebergAllowed                  bool               `json:"icebergAllowed"`
+	OcoAllowed                      bool               `json:"ocoAllowed"`
+	OtoAllowed                      bool               `json:"otoAllowed"`
+	QuoteOrderQtyMarketAllowed      bool               `json:"quoteOrderQtyMarketAllowed"`
+	AllowTrailingStop               bool               `json:"allowTrailingStop"`
+	CancelReplaceAllowed            bool               `json:"cancelReplaceAllowed"`
+	IsSpotTradingAllowed            bool               `json:"isSpotTradingAllowed"`
+	IsMarginTradingAllowed          bool               `json:"isMarginTradingAllowed"`
+	Filters                         []SpotSymbolFilter `json:"filters"`
+	Permissions                     []any              `json:"permissions"`
+	PermissionSets                  [][]string         `json:"permissionSets"`
+	DefaultSelfTradePreventionMode  string             `json:"defaultSelfTradePreventionMode"`
+	AllowedSelfTradePreventionModes []string           `json:"allowedSelfTradePreventionModes"`
 }
 
-type SymbolFilter struct {
+type SpotSymbolFilter struct {
 	FilterType            string `json:"filterType"`
 	MinPrice              string `json:"minPrice,omitempty"`
 	MaxPrice              string `json:"maxPrice,omitempty"`
@@ -74,8 +74,8 @@ type SymbolFilter struct {
 }
 
 // NewSpotExchange creates a new exchange info using the API response
-func NewSpotExchange() (*Exchange, error) {
-	var exchangeInfo Exchange
+func NewSpotExchange() (*SpotExchange, error) {
+	var exchangeInfo SpotExchange
 
 	// Binance API url + endpoint
 	url := "https://api.binance.com/api/v3/exchangeInfo"
@@ -99,7 +99,7 @@ func NewSpotExchange() (*Exchange, error) {
 	}
 
 	// Initialize the map and populate it
-	exchangeInfo.symbolsMap = make(map[string]*SymbolInfo)
+	exchangeInfo.symbolsMap = make(map[string]*SpotSymbolInfo)
 	for i := range exchangeInfo.Symbols {
 		exchangeInfo.symbolsMap[exchangeInfo.Symbols[i].Symbol] = &exchangeInfo.Symbols[i]
 	}
@@ -108,12 +108,12 @@ func NewSpotExchange() (*Exchange, error) {
 }
 
 // GetSymbolInfo returns the symbol information for the given symbol
-func (e *Exchange) GetSymbolInfo(symbol string) *SymbolInfo {
+func (e *SpotExchange) GetSymbolInfo(symbol string) *SpotSymbolInfo {
 	return e.symbolsMap[symbol]
 }
 
 // GetSymbolFilter returns the filter of specified type for the given symbol
-func (s *SymbolInfo) GetSymbolFilter(filterType string) *SymbolFilter {
+func (s *SpotSymbolInfo) GetSymbolFilter(filterType string) *SpotSymbolFilter {
 	for _, f := range s.Filters {
 		if f.FilterType == filterType {
 			return &f
@@ -123,6 +123,6 @@ func (s *SymbolInfo) GetSymbolFilter(filterType string) *SymbolFilter {
 }
 
 // GetSymbolQuotePrecision returns the quote precision for the given symbol
-func (s *SymbolInfo) GetSymbolQuotePrecision() int {
+func (s *SpotSymbolInfo) GetSymbolQuotePrecision() int {
 	return s.QuotePrecision
 }

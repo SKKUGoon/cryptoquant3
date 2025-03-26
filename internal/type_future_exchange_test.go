@@ -7,15 +7,20 @@ import (
 	"cryptoquant.com/m/internal"
 )
 
-func TestGetSpotSymbolInfo(t *testing.T) {
-	_, err := internal.NewSpotExchange()
+func TestNewFutureExchange(t *testing.T) {
+	exchangeInfo, err := internal.NewFutureExchange()
 	if err != nil {
 		t.Fatalf("Failed to create exchange info: %v", err)
 	}
+
+	symbolInfo := exchangeInfo.GetSymbolInfo("BTCUSDT")
+	if symbolInfo == nil {
+		t.Fatalf("Failed to get symbol info: %v", err)
+	}
 }
 
-func TestGetSymbolFilter(t *testing.T) {
-	exchangeInfo, err := internal.NewSpotExchange()
+func TestGetFutureSymbolFilter(t *testing.T) {
+	exchangeInfo, err := internal.NewFutureExchange()
 	if err != nil {
 		t.Fatalf("Failed to create exchange info: %v", err)
 	}
@@ -29,17 +34,16 @@ func TestGetSymbolFilter(t *testing.T) {
 	fmt.Println(symbolFilter)
 }
 
-func TestGetSymbolQuotePrecision(t *testing.T) {
-	exchangeInfo, err := internal.NewSpotExchange()
+func TestGetFutureSymbolPricePrecision(t *testing.T) {
+	exchangeInfo, err := internal.NewFutureExchange()
 	if err != nil {
 		t.Fatalf("Failed to create exchange info: %v", err)
 	}
 
-	symbolInfo := exchangeInfo.GetSymbolInfo("XRPUSDT")
+	symbolInfo := exchangeInfo.GetSymbolInfo("BTCUSDT")
 	if symbolInfo == nil {
 		t.Fatalf("Failed to get symbol info: %v", err)
 	}
 
-	quotePrecision := symbolInfo.GetSymbolQuotePrecision()
-	fmt.Println(quotePrecision)
+	fmt.Println(symbolInfo.GetSymbolPricePrecision())
 }
