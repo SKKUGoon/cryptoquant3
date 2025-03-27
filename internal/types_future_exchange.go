@@ -101,6 +101,14 @@ func NewFutureExchange() (*FutureExchange, error) {
 	return &exchangeInfo, nil
 }
 
+func (e *FutureExchange) GetSymbols() []string {
+	symbols := make([]string, 0, len(e.symbolsMap))
+	for symbol := range e.symbolsMap {
+		symbols = append(symbols, symbol)
+	}
+	return symbols
+}
+
 // GetSymbolInfo returns the symbol information for the given symbol
 func (e *FutureExchange) GetSymbolInfo(symbol string) *FutureSymbolInfo {
 	return e.symbolsMap[symbol]

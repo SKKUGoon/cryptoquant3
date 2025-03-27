@@ -107,6 +107,15 @@ func NewSpotExchange() (*SpotExchange, error) {
 	return &exchangeInfo, nil
 }
 
+// GetSymbols returns all the symbols in the exchange
+func (e *SpotExchange) GetSymbols() []string {
+	symbols := make([]string, 0, len(e.symbolsMap))
+	for symbol := range e.symbolsMap {
+		symbols = append(symbols, symbol)
+	}
+	return symbols
+}
+
 // GetSymbolInfo returns the symbol information for the given symbol
 func (e *SpotExchange) GetSymbolInfo(symbol string) *SpotSymbolInfo {
 	return e.symbolsMap[symbol]
