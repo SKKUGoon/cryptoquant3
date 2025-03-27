@@ -2,7 +2,9 @@ package data
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"sort"
 	"strconv"
@@ -38,8 +40,61 @@ func (d *Database) Close() error {
 	return d.db.Close()
 }
 
-// ImportNimbusData imports Nimbus data for testing purposes
-func (d *Database) ImportNimbusData() ([]float64, []float64, error) {
+func (d *Database) GetTradeMetadata(key string) (any, error) {
+	query := `SELECT value, value_type 
+		FROM cryptoquant.trading_metadata
+		WHERE key = $1`
+
+	rows, err := d.db.Query(query, key)
+	if err != nil {
+		return nil, fmt.Errorf("error querying data: %v", err)
+	}
+	defer rows.Close()
+
+	var value string
+	var valueType string
+
+	for rows.Next() {
+		if err := rows.Scan(&value, &valueType); err != nil {
+			log.Printf("error scanning row: %v\n", err)
+			continue
+		}
+
+		switch valueType {
+		case "int":
+			return strconv.Atoi(value)
+		case "float64":
+			return strconv.ParseFloat(value, 64)
+		case "bool":
+			return strconv.ParseBool(value)
+		case "string":
+			return value, nil
+		case "[]string":
+			var out []string
+			err := json.Unmarshal([]byte(value), &out)
+			return out, err
+		case "[]int":
+			var out []int
+			err := json.Unmarshal([]byte(value), &out)
+			return out, err
+		case "[]float64":
+			var out []float64
+			err := json.Unmarshal([]byte(value), &out)
+			return out, err
+		case "[]bool":
+			var out []bool
+			err := json.Unmarshal([]byte(value), &out)
+			return out, err
+		default:
+			return nil, fmt.Errorf("unsupported value_type: %s", valueType)
+		}
+	}
+
+	return nil, fmt.Errorf("key not found: %s", key)
+}
+
+// GetBacktestData imports Nimbus data for testing purposes
+func (d *Database) GetBacktestData() ([]float64, []float64, error) {
 	query := `SELECT timestamp, close, close_time, symbol, quote_volume 
 		FROM nimbus.binance_klines 
 		WHERE (symbol = 'APEUSDT' or symbol = 'BTTCUSDT') 
