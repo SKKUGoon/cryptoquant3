@@ -69,5 +69,9 @@ func TestEngine_StartStream(t *testing.T) {
 	engine.StartPairs()
 	engine.StartStream()
 
-	time.Sleep(20 * time.Second)
+	time.Sleep(26 * time.Second)
+
+	for _, pair := range engine.Pairs {
+		t.Log(pair.PairSymbol, pair.HistoricSpread.Items)
+	}
 }
