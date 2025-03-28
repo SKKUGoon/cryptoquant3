@@ -1,6 +1,7 @@
 package config
 
 import (
+	"log"
 	"sort"
 	"strings"
 
@@ -68,18 +69,19 @@ func (e *FutureTradeConfig) GetSymbolQuotePrecision(symbol string) int {
 
 func (e *FutureTradeConfig) GetAvailableSymbols() []string {
 	symbols := e.ExchangeInfo.GetAvailableSymbols(e.isTest)
-	quotingSymbols := make([]string, 0)
+	quotingSymbols := []string{}
 	for _, symbol := range symbols {
 		if strings.HasSuffix(symbol, e.QuotingAsset) {
 			quotingSymbols = append(quotingSymbols, symbol)
 		}
 	}
+	log.Println("Available symbols: ", len(quotingSymbols))
 	return quotingSymbols
 }
 
 // CreatePair implements Exchange interface
-func (e *FutureTradeConfig) CreatePair(test bool) []string {
-	symbols := e.ExchangeInfo.GetAvailableSymbols(test)
+func (e *FutureTradeConfig) CreatePair() []string {
+	symbols := e.GetAvailableSymbols()
 	sort.Strings(symbols) // ensures deterministic order
 	pairs := make([]string, len(symbols)*(len(symbols)-1)/2)
 	k := 0

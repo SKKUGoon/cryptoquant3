@@ -68,6 +68,7 @@ func SubscribeKlineMulti(symbols []string, interval string, chMap map[string]cha
 	for {
 		select {
 		case <-done:
+			// Close all channels
 			for _, symbol := range symbols {
 				close(chMap[symbol])
 			}

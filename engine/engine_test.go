@@ -1,7 +1,6 @@
 package engine_test
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -9,55 +8,66 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func TestEngine(t *testing.T) {
+func TestEngine_StartStreamCh(t *testing.T) {
 	if err := godotenv.Load("../.env"); err != nil {
 		t.Fatalf("Error loading .env file: %v", err)
 	}
 
 	engine := engine.NewEngine()
 	engine.SetTestMode(true)
+	engine.FutureConfig.UpdateQuotingAsset("USDT")
 
-	engine.StartChMap()
+	engine.StartStreamCh()
 
 	t.Log(engine.ChMap)
 }
 
-func TestEngineStartPairCalculation(t *testing.T) {
+func TestEngine_StartPairAssets(t *testing.T) {
 	if err := godotenv.Load("../.env"); err != nil {
 		t.Fatalf("Error loading .env file: %v", err)
 	}
+
+	// done := make(chan struct{})
 
 	engine := engine.NewEngine()
 	engine.SetTestMode(true)
 	engine.FutureConfig.UpdateQuotingAsset("USDT")
 
-	engine.StartChMap()
-	engine.PreparePairCalculation()
+	engine.StartStreamCh()
+	engine.StartPairAssets()
 
-	t.Log(engine)
+	t.Log(engine.PairAssets)
 }
 
-func TestEngineStartStream(t *testing.T) {
+func TestEngine_StartPairs(t *testing.T) {
 	if err := godotenv.Load("../.env"); err != nil {
 		t.Fatalf("Error loading .env file: %v", err)
 	}
-
-	done := make(chan struct{})
 
 	engine := engine.NewEngine()
 	engine.SetTestMode(true)
 	engine.FutureConfig.UpdateQuotingAsset("USDT")
 
-	engine.StartChMap()
-	engine.PreparePairCalculation()
-	engine.ListenPair(done)
-	engine.StartStream(done)
+	engine.StartStreamCh()
+	engine.StartPairAssets()
+	engine.StartPairs()
 
-	time.Sleep(10 * time.Second)
-	done <- struct{}{}
+	t.Log(engine.Pairs)
+}
 
-	for key, i := range engine.Pairs {
-		fmt.Println(key, i.Spread)
+func TestEngine_StartStream(t *testing.T) {
+	if err := godotenv.Load("../.env"); err != nil {
+		t.Fatalf("Error loading .env file: %v", err)
 	}
-	fmt.Println(engine.Pairs)
+
+	engine := engine.NewEngine()
+	engine.SetTestMode(true)
+	engine.FutureConfig.UpdateQuotingAsset("USDT")
+
+	engine.StartStreamCh()
+	engine.StartPairAssets()
+	engine.StartPairs()
+	engine.StartStream()
+
+	time.Sleep(20 * time.Second)
 }

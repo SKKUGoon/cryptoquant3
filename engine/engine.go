@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"fmt"
 	"log"
 	"strings"
 
@@ -20,10 +21,12 @@ type Engine struct {
 	Database     *data.Database
 
 	// Streaming data
-	Pairs map[string]strategy.Pair
-	ChMap map[string]chan internal.KlineData // Channels for kline data. Key is symbol
+	PairAssets map[string]*strategy.PairAsset
+	Pairs      map[string]*strategy.Pair
+	ChMap      map[string]chan internal.KlineData // Channels for kline data. Key is symbol
 
 	// Engine status
+	done          chan struct{}
 	isTest        bool
 	isStreaming   bool
 	isCalculating bool
@@ -50,12 +53,16 @@ func NewEngine() *Engine {
 	exchangeRestApi.UpdateRateLimit(config.ExchangeInfo.GetRequestRateLimit())
 
 	engine := &Engine{
-		FutureConfig: config,
-		Database:     db,
-		FutureMarket: exchangeRestApi,
-		Pairs:        make(map[string]strategy.Pair),
-		ChMap:        make(map[string]chan internal.KlineData),
-		isTest:       false,
+		FutureConfig:  config,
+		Database:      db,
+		FutureMarket:  exchangeRestApi,
+		PairAssets:    make(map[string]*strategy.PairAsset),
+		Pairs:         make(map[string]*strategy.Pair),
+		ChMap:         make(map[string]chan internal.KlineData),
+		done:          make(chan struct{}),
+		isTest:        false,
+		isStreaming:   false,
+		isCalculating: false,
 	}
 
 	return engine
@@ -66,33 +73,69 @@ func (e *Engine) SetTestMode(testMode bool) {
 	e.FutureConfig.SetTestMode(testMode)
 }
 
-func (e *Engine) StartChMap() {
+// StartStreamCh starts the stream channels for the available symbols.
+// It transfers data from the websocket connections to PairAssets.
+func (e *Engine) StartStreamCh() {
 	symbols := e.FutureConfig.GetAvailableSymbols()
 	for _, symbol := range symbols {
 		e.ChMap[symbol] = make(chan internal.KlineData, 5)
 	}
 }
 
-func (e *Engine) PreparePairCalculation() {
-	pairs := e.FutureConfig.CreatePair(e.isTest)
+// StartPairAssets starts the PairAssets for the available symbols.
+// Receives data from the stream channels and transfers and broadcasts to the Pairs.
+func (e *Engine) StartPairAssets() {
+	symbols := e.FutureConfig.GetAvailableSymbols()
+	for _, symbol := range symbols {
+		fmt.Println("Starting pair asset: ", symbol)
+		e.PairAssets[symbol] = strategy.NewPairAsset(symbol)
+		e.PairAssets[symbol].SetChannel(e.ChMap[symbol])
 
-	for _, pair := range pairs {
-		assets := strings.Split(pair, "-")
-		asset1 := assets[0]
-		asset2 := assets[1]
-
-		// Create a new pair
-		e.Pairs[pair] = *strategy.NewPair(asset1, asset2)
-
-		// Set the channels for the pair
-		e.Pairs[pair].Asset1.SetChannel(e.ChMap[asset1])
-		e.Pairs[pair].Asset2.SetChannel(e.ChMap[asset2])
-
-		e.FutureMarket.GetKlineData(asset1, "1m", 100)
+		go e.PairAssets[symbol].Run(e.done)
 	}
 }
 
-func (e *Engine) StartStream(done chan struct{}) {
+func (e *Engine) StopPairAssets() {
+	symbols := e.FutureConfig.GetAvailableSymbols()
+	for _, symbol := range symbols {
+		e.PairAssets[symbol].Close()
+	}
+}
+
+// StartPairs starts the Pairs for the available symbols.
+// Subscribes to the PairAssets and receives data from them.
+func (e *Engine) StartPairs() {
+	pairAssets := e.FutureConfig.CreatePair()
+
+	for _, pair := range pairAssets {
+		symbols := strings.Split(pair, "-")
+
+		asset1, ok := e.PairAssets[symbols[0]]
+		if !ok {
+			log.Println("Asset1 not found: ", symbols[0])
+			continue
+		}
+		asset2, ok := e.PairAssets[symbols[1]]
+		if !ok {
+			log.Println("Asset2 not found: ", symbols[1])
+			continue
+		}
+
+		e.Pairs[pair] = strategy.NewPair()
+		e.Pairs[pair].Subscribe(asset1, asset2)
+
+		go e.Pairs[pair].Run(e.done)
+	}
+}
+
+func (e *Engine) StopPairs() {
+
+}
+
+// StartStream starts the stream for the available symbols.
+// It subscribes to the stream channels and receives data from them.
+// Should be called after StartStreamCh and StartPairAssets.
+func (e *Engine) StartStream() {
 	symbols := e.FutureConfig.GetAvailableSymbols()
 	// Group symbols into chunks of 5
 	const chunkSize = 5
@@ -101,23 +144,11 @@ func (e *Engine) StartStream(done chan struct{}) {
 		symbolGroup := symbols[i:end]
 
 		// Process each group of symbols - Multiple queires
-		go streams.SubscribeKlineMulti(symbolGroup, "1m", e.ChMap, done)
+		go streams.SubscribeKlineMulti(symbolGroup, "1m", e.ChMap, e.done)
 	}
 
 	e.isStreaming = true
 }
 
 func (e *Engine) StopStream() {
-	e.isStreaming = false
-
-	for _, ch := range e.ChMap {
-		close(ch)
-	}
-}
-
-// ListenPair the engine. ListenPair all the pair streams
-func (e *Engine) ListenPair(done chan struct{}) {
-	for _, pair := range e.Pairs {
-		go pair.Run(done)
-	}
 }

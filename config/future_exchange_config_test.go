@@ -13,7 +13,7 @@ func TestFutureTradeConfig_CreatePair(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	pair := tradeConfig.CreatePair(true)
+	pair := tradeConfig.CreatePair()
 
 	fmt.Println(pair)
 }

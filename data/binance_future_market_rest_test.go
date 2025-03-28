@@ -21,3 +21,16 @@ func TestGetKlineData(t *testing.T) {
 		t.Log("Usage", bm.CurrentRate, "/", bm.RateLimit, "used")
 	}
 }
+
+func TestGetKlineClosePrices(t *testing.T) {
+	bm := data.NewBinanceFutureMarketData()
+	klineData, err := bm.GetKlineData("BTCUSDT", "1m", 100)
+	if err != nil {
+		t.Fatal(err)
+	}
+	closePrices, err := klineData.GetKlineClosePrices()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(closePrices)
+}
