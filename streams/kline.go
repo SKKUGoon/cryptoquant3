@@ -10,7 +10,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func SubscribeKline(symbol, interval string, ch chan internal.KlineData, done chan struct{}) error {
+func SubscribeKline(symbol, interval string, ch chan internal.KlineDataStream, done chan struct{}) error {
 	// Binance Futures WebSocket endpoint
 	url := fmt.Sprintf("wss://fstream.binance.com/stream?streams=%s@kline_%s",
 		strings.ToLower(symbol), interval)
@@ -24,7 +24,7 @@ func SubscribeKline(symbol, interval string, ch chan internal.KlineData, done ch
 
 	log.Printf("Connected to Binance Futures stream for %s", symbol)
 
-	var streamData internal.Stream[internal.KlineData]
+	var streamData internal.Stream[internal.KlineDataStream]
 	for {
 		select {
 		case <-done:
@@ -47,7 +47,7 @@ func SubscribeKline(symbol, interval string, ch chan internal.KlineData, done ch
 	}
 }
 
-func SubscribeKlineMulti(symbols []string, interval string, chMap map[string]chan internal.KlineData, done chan struct{}) error {
+func SubscribeKlineMulti(symbols []string, interval string, chMap map[string]chan internal.KlineDataStream, done chan struct{}) error {
 	urlBase := "wss://fstream.binance.com/stream?streams="
 	streams := make([]string, len(symbols))
 	for i := range symbols {
@@ -64,7 +64,7 @@ func SubscribeKlineMulti(symbols []string, interval string, chMap map[string]cha
 
 	log.Printf("Connected to Binance Futures stream for %s", strings.Join(symbols, ", "))
 
-	var streamData internal.Stream[internal.KlineData]
+	var streamData internal.Stream[internal.KlineDataStream]
 	for {
 		select {
 		case <-done:

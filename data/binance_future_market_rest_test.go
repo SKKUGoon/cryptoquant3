@@ -34,3 +34,16 @@ func TestGetKlineClosePrices(t *testing.T) {
 	}
 	t.Log(closePrices)
 }
+
+func TestGetKlineLatestCloseTime(t *testing.T) {
+	bm := data.NewBinanceFutureMarketData()
+	klineData, err := bm.GetKlineData("BTCUSDT", "1m", 100)
+	if err != nil {
+		t.Fatal(err)
+	}
+	closeTime, err := klineData.GetKlineLatestCloseTime()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(closeTime)
+}

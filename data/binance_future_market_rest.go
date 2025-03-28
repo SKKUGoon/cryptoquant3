@@ -30,7 +30,7 @@ func (bm *BinanceFutureMarketData) UpdateCurrentRate(currentRate int) {
 	bm.CurrentRate = currentRate
 }
 
-func (bm *BinanceFutureMarketData) GetKlineData(symbol string, interval string, limit int) (internal.FutureKlineData, error) {
+func (bm *BinanceFutureMarketData) GetKlineData(symbol string, interval string, limit int) (internal.KlineDataREST, error) {
 	const weight = 5
 	const urlBase = "https://fapi.binance.com/fapi/v1/klines"
 
@@ -62,7 +62,7 @@ func (bm *BinanceFutureMarketData) GetKlineData(symbol string, interval string, 
 		return nil, err
 	}
 
-	var klineData internal.FutureKlineData
+	var klineData internal.KlineDataREST
 	if err := json.Unmarshal(body, &klineData); err != nil {
 		return nil, err
 	}

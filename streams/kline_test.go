@@ -10,7 +10,7 @@ import (
 
 func TestSubscribeKline(t *testing.T) {
 	t.Log("Starting Stream BTCUSDT 1m")
-	ch := make(chan internal.KlineData)
+	ch := make(chan internal.KlineDataStream)
 	done := make(chan struct{})
 	go streams.SubscribeKline("BTCUSDT", "1m", ch, done)
 
@@ -27,12 +27,12 @@ func TestSubscribeKline(t *testing.T) {
 
 func TestSubscribeKlineMulti(t *testing.T) {
 	t.Log("Starting Stream BTCUSDT 1m")
-	chMap := make(map[string]chan internal.KlineData)
-	chMap["BTCUSDT"] = make(chan internal.KlineData)
-	chMap["ETHUSDT"] = make(chan internal.KlineData)
-	chMap["XRPUSDT"] = make(chan internal.KlineData)
-	chMap["DOGEUSDT"] = make(chan internal.KlineData)
-	chMap["LINKUSDT"] = make(chan internal.KlineData)
+	chMap := make(map[string]chan internal.KlineDataStream)
+	chMap["BTCUSDT"] = make(chan internal.KlineDataStream)
+	chMap["ETHUSDT"] = make(chan internal.KlineDataStream)
+	chMap["XRPUSDT"] = make(chan internal.KlineDataStream)
+	chMap["DOGEUSDT"] = make(chan internal.KlineDataStream)
+	chMap["LINKUSDT"] = make(chan internal.KlineDataStream)
 
 	symbols := []string{"BTCUSDT", "ETHUSDT", "XRPUSDT", "DOGEUSDT", "LINKUSDT"}
 	done := make(chan struct{})

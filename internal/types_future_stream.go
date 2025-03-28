@@ -1,3 +1,4 @@
+// Test is performed on the `streams` and `engine` package
 package internal
 
 type Stream[T any] struct {
@@ -5,7 +6,7 @@ type Stream[T any] struct {
 	Data   T      `json:"data"`
 }
 
-type KlineData struct {
+type KlineDataStream struct {
 	EventType string `json:"e"`
 	EventTime int64  `json:"E"`
 	Symbol    string `json:"s"`

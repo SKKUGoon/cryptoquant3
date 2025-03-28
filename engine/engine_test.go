@@ -34,7 +34,7 @@ func TestEngine_StartPairAssets(t *testing.T) {
 	engine.FutureConfig.UpdateQuotingAsset("USDT")
 
 	engine.StartStreamCh()
-	engine.StartPairAssets()
+	engine.StartAssets()
 
 	t.Log(engine.PairAssets)
 }
@@ -49,7 +49,7 @@ func TestEngine_StartPairs(t *testing.T) {
 	engine.FutureConfig.UpdateQuotingAsset("USDT")
 
 	engine.StartStreamCh()
-	engine.StartPairAssets()
+	engine.StartAssets()
 	engine.StartPairs()
 
 	t.Log(engine.Pairs)
@@ -65,7 +65,7 @@ func TestEngine_StartStream(t *testing.T) {
 	engine.FutureConfig.UpdateQuotingAsset("USDT")
 
 	engine.StartStreamCh()
-	engine.StartPairAssets()
+	engine.StartAssets()
 	engine.StartPairs()
 	engine.StartStream()
 

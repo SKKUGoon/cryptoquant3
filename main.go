@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"log"
+	"time"
 
-	"cryptoquant.com/m/internal"
+	"cryptoquant.com/m/engine"
 	"github.com/joho/godotenv"
 )
 
@@ -16,11 +16,16 @@ func init() {
 }
 
 func main() {
-	pd := internal.PriceData{
-		Symbol: "BTCUSDT",
-		Price:  "10000",
-		Size:   "1",
-		Time:   "1715817600",
+	engine := engine.NewEngine()
+	engine.StartStreamCh()
+	engine.StartAssets()
+	engine.StartPairs()
+	engine.StartStream()
+
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		log.Printf("[engine status] %s", engine.GetStatus())
 	}
-	fmt.Println(pd)
 }

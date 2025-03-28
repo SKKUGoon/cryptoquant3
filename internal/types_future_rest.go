@@ -1,3 +1,4 @@
+// Test is performed on the `data` package
 package internal
 
 import (
@@ -5,7 +6,8 @@ import (
 	"strconv"
 )
 
-type FutureKlineData [][]any
+// KlineDataREST is the type of the kline data returned by the Binance API
+type KlineDataREST [][]any
 
 // Index of the data in the FutureKlineData
 const (
@@ -23,7 +25,8 @@ const (
 	FutureKlineDataIgnore                   = 11
 )
 
-func (k *FutureKlineData) GetKlineClosePrices() ([]float64, error) {
+// GetKlineClosePrices returns the close prices of the kline data
+func (k *KlineDataREST) GetKlineClosePrices() ([]float64, error) {
 	if k == nil || len(*k) == 0 {
 		return nil, fmt.Errorf("kline data is nil or empty")
 	}
@@ -40,4 +43,13 @@ func (k *FutureKlineData) GetKlineClosePrices() ([]float64, error) {
 		closePrices[i] = closePrice
 	}
 	return closePrices, nil
+}
+
+// GetKlineLatestCloseTime returns the latest close time of the kline data
+func (k *KlineDataREST) GetKlineLatestCloseTime() (float64, error) {
+	if k == nil || len(*k) == 0 {
+		return 0, fmt.Errorf("kline data is nil or empty")
+	}
+	closeTime := (*k)[len(*k)-1][FutureKlineDataCloseTime]
+	return closeTime.(float64), nil
 }
