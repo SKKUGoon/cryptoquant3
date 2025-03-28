@@ -1,11 +1,13 @@
 package data
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"time"
+
+	"cryptoquant.com/m/internal"
 )
 
 type BinanceFutureMarketData struct {
@@ -28,7 +30,7 @@ func (bm *BinanceFutureMarketData) UpdateCurrentRate(currentRate int) {
 	bm.CurrentRate = currentRate
 }
 
-func (bm *BinanceFutureMarketData) GetKlineData(symbol string, interval string, limit int) {
+func (bm *BinanceFutureMarketData) GetKlineData(symbol string, interval string, limit int) (internal.FutureKlineData, error) {
 	const weight = 5
 	const urlBase = "https://fapi.binance.com/fapi/v1/klines"
 
@@ -43,14 +45,27 @@ func (bm *BinanceFutureMarketData) GetKlineData(symbol string, interval string, 
 	url := fmt.Sprintf("%s?symbol=%s&interval=%s&limit=%d", urlBase, symbol, interval, limit)
 	resp, err := http.Get(url)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatal(err)
+	// Update rate limit from response headers
+	if weightStr := resp.Header.Get("X-MBX-USED-WEIGHT-1M"); weightStr != "" {
+		var currentWeight int
+		if _, err := fmt.Sscanf(weightStr, "%d", &currentWeight); err == nil {
+			bm.UpdateCurrentRate(currentWeight)
+		}
 	}
 
-	fmt.Println(body)
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var klineData internal.FutureKlineData
+	if err := json.Unmarshal(body, &klineData); err != nil {
+		return nil, err
+	}
+
+	return klineData, nil
 }
