@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"sort"
 )
 
 type FutureExchange struct {
@@ -101,10 +102,42 @@ func NewFutureExchange() (*FutureExchange, error) {
 	return &exchangeInfo, nil
 }
 
-func (e *FutureExchange) GetSymbols() []string {
+func (e *FutureExchange) GetRequestRateLimit() int {
+	for _, rateLimit := range e.RateLimits {
+		if rateLimit.RateLimitType == "REQUEST_WEIGHT" {
+			return rateLimit.Limit
+		}
+	}
+	return 0
+}
+
+func (e *FutureExchange) GetMinuteOrderRateLimit() int {
+	for _, rateLimit := range e.RateLimits {
+		if rateLimit.RateLimitType == "ORDERS" && rateLimit.Interval == "MINUTE" {
+			return rateLimit.Limit
+		}
+	}
+	return 0
+}
+
+func (e *FutureExchange) GetSecondOrderRateLimit() int {
+	for _, rateLimit := range e.RateLimits {
+		if rateLimit.RateLimitType == "ORDERS" && rateLimit.Interval == "SECOND" {
+			return rateLimit.Limit
+		}
+	}
+	return 0
+}
+
+func (e *FutureExchange) GetAvailableSymbols(test bool) []string {
 	symbols := make([]string, 0, len(e.symbolsMap))
 	for symbol := range e.symbolsMap {
 		symbols = append(symbols, symbol)
+	}
+	sort.Strings(symbols) // ensures deterministic order
+
+	if test {
+		return symbols[:5]
 	}
 	return symbols
 }
