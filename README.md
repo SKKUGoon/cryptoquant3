@@ -37,26 +37,54 @@ Re-write everything in Go
 ## Structure 
 
 ```
+.
 ├── README.md
-├── config/               # Config settings (API keys, DB config, etc.)
-│   ├── config.go
-├── data/                 # Database (Postgres storage) & data models
-│   ├── models.go         # ✅ Define core structs (PriceData, TradeSignal, Order)
-│   ├── store.go          # ✅ Postgres interaction (saving WebSocket data)
-├── engine/               # Trading execution logic
-│   ├── trade.go          # ✅ Handles trade execution
+├── config
+│   ├── exchange.go
+│   ├── future_exchange_config.go
+│   └── future_exchange_config_test.go
+├── data
+│   ├── binance_future_market_rest.go
+│   ├── binance_future_market_rest_test.go
+│   ├── db.go
+│   └── db_test.go
+├── engine
+│   ├── engine.go
+│   ├── engine_test.go
+│   └── trade.go
 ├── go.mod
-├── main.go               # ✅ Initializes channels & starts goroutines
-├── strategy/             # Trading strategy logic
-│   ├── pairs.go          # ✅ Pair trading logic (uses TradeSignal channel)
-├── streams/              # WebSocket streaming
-│   ├── subscribe.go      # ✅ Connects to WebSockets, sends data to channels
-├── utils/                # Utility functions (logs, timestamps, etc.)
-│   ├── logger.go
-│   ├── timeutils.go
-└── internal/             # ✅ New package for shared data & channels
-    ├── channels.go       # ✅ Defines all channels
-    ├── types.go          # ✅ Defines PriceData, TradeSignal, Order structs
+├── go.sum
+├── internal
+│   ├── channels_core.go
+│   ├── types_core.go
+│   ├── types_future_exchange.go
+│   ├── types_future_exchange_test.go
+│   ├── types_future_rest.go
+│   ├── types_future_stream.go
+│   ├── types_spot_exchange.go
+│   └── types_spot_exchange_test.go
+├── main.go
+├── strategy
+│   ├── calculation
+│   │   ├── cointegration.go
+│   │   ├── cointegration_test.go
+│   │   ├── hurst.go
+│   │   ├── hurst_test.go
+│   │   ├── spread_kalman.go
+│   │   ├── spread_ols.go
+│   │   └── spread_ols_test.go
+│   └── pairs
+│       ├── README.md
+│       ├── type_assets.go
+│       ├── type_pairs.go
+│       └── update_pairs.go
+├── streams
+│   ├── kline.go
+│   └── kline_test.go
+└── utils
+    ├── float_queue.go
+    ├── logger.go
+    └── timeutils.go
 ```
 
 `strategy/` is hidden from the master branch. It's never wise to reveal your strategy.

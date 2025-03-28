@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"time"
 
@@ -20,6 +21,10 @@ func NewBinanceFutureMarketData() *BinanceFutureMarketData {
 		RateLimit:   1000,
 		CurrentRate: 0,
 	}
+}
+
+func (bm *BinanceFutureMarketData) GetStatus() string {
+	return fmt.Sprintf("RateLimit: %d | CurrentRate: %d", bm.RateLimit, bm.CurrentRate)
 }
 
 func (bm *BinanceFutureMarketData) UpdateRateLimit(rateLimit int) {
@@ -64,6 +69,7 @@ func (bm *BinanceFutureMarketData) GetKlineData(symbol string, interval string, 
 
 	var klineData internal.KlineDataREST
 	if err := json.Unmarshal(body, &klineData); err != nil {
+		log.Printf("Failed to unmarshal kline data: %v. Body: %s", err, string(body))
 		return nil, err
 	}
 

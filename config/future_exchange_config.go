@@ -75,7 +75,7 @@ func (e *FutureTradeConfig) GetAvailableSymbols() []string {
 			quotingSymbols = append(quotingSymbols, symbol)
 		}
 	}
-	log.Println("Available symbols: ", len(quotingSymbols))
+	log.Println("[binance future exchange] Available symbols: ", len(quotingSymbols))
 	return quotingSymbols
 }
 

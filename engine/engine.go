@@ -27,13 +27,15 @@ type Engine struct {
 	ChMap      map[string]chan internal.KlineDataStream // Channels for kline data. Key is symbol
 
 	// Engine status
-	done            chan struct{}
-	numberOfAssets  int
-	numberOfStreams int
-	numberOfPairs   int
-	isTest          bool
-	isStreaming     bool
-	isCalculating   bool
+	done                chan struct{}
+	numberOfAssets      int
+	numberOfStreams     int
+	numberOfPairs       int
+	failedAssetsSymbols []string
+	failedPairsSymbols  []string
+	isTest              bool
+	isStreaming         bool
+	isCalculating       bool
 }
 
 func NewEngine() *Engine {
@@ -94,7 +96,7 @@ func (e *Engine) StartStreamCh() {
 func (e *Engine) StartAssets() {
 	symbols := e.FutureConfig.GetAvailableSymbols()
 	for _, symbol := range symbols {
-		fmt.Println("[engine] Starting individual asset: ", symbol)
+		log.Println("[engine] Starting individual asset: ", symbol)
 		e.PairAssets[symbol] = strategy.NewAsset(symbol)
 		e.PairAssets[symbol].SetChannel(e.ChMap[symbol])
 
@@ -122,26 +124,32 @@ func (e *Engine) StartPairs() {
 		assetY, assetX, err := e.getAndValidateAssets(symbols)
 		if err != nil {
 			log.Println("[engine] Error getting assets:", err)
+			e.failedAssetsSymbols = append(e.failedAssetsSymbols, symbols...)
 			continue
 		}
 
 		// Update historic data for both assets if needed
 		if err := e.updateHistoricData(assetY); err != nil {
 			log.Println("[engine] Error updating historic data for asset Y:", err)
+			e.failedAssetsSymbols = append(e.failedAssetsSymbols, symbols...)
 			continue
 		}
 
 		if err := e.updateHistoricData(assetX); err != nil {
 			log.Println("[engine] Error updating historic data for asset X:", err)
+			e.failedAssetsSymbols = append(e.failedAssetsSymbols, symbols...)
+			continue
+		}
+
+		if err := e.initializeAndStartPair(pair, assetY, assetX); err != nil {
+			log.Println("[engine] Error initializing pair:", err)
 			continue
 		}
 
 		// Initialize and start the pair
 		log.Println("[engine] Starting pair:", pair)
-		if err := e.initializeAndStartPair(pair, assetY, assetX); err != nil {
-			log.Println("[engine] Error initializing pair:", err)
-			continue
-		}
+		log.Println("[engine] Monitor Usage: ", e.FutureMarket.GetStatus())
+
 		e.numberOfPairs++
 	}
 }
@@ -161,16 +169,19 @@ func (e *Engine) getAndValidateAssets(symbols []string) (*strategy.Asset, *strat
 }
 
 func (e *Engine) updateHistoricData(asset *strategy.Asset) error {
+	// If the asset has no historic data, fetch and set it
 	if asset.HistoricKlines == nil {
 		return e.fetchAndSetHistoricData(asset)
 	}
 
+	// If the asset has historic data, check if it is up to date
 	timestampNow := time.Now().Unix() * 1000
 	closeTime, err := asset.HistoricKlines.GetKlineLatestCloseTime()
 	if err != nil {
 		return fmt.Errorf("failed to get kline closing time data: %v", err)
 	}
 
+	// If the asset is not up to date, fetch and set it
 	if timestampNow-int64(closeTime) > 60000 { // 1 minute
 		return e.fetchAndSetHistoricData(asset)
 	}
@@ -183,6 +194,7 @@ func (e *Engine) fetchAndSetHistoricData(asset *strategy.Asset) error {
 	if err != nil {
 		return fmt.Errorf("failed to get kline data: %v", err)
 	}
+
 	asset.SetHistoricPrice(klineData)
 	return nil
 }
@@ -201,7 +213,10 @@ func (e *Engine) initializeAndStartPair(pair string, assetY, assetX *strategy.As
 		return fmt.Errorf("failed to get kline close prices for asset X: %v", err)
 	}
 
-	e.Pairs[pair].WarmUpFilter(assetYClosePrices, assetXClosePrices)
+	err = e.Pairs[pair].WarmUpFilter(assetYClosePrices, assetXClosePrices)
+	if err != nil {
+		return fmt.Errorf("failed to warm up filter: %v", err)
+	}
 	log.Println("[engine] Warm up filter:", pair)
 	go e.Pairs[pair].Run(e.done)
 	return nil
