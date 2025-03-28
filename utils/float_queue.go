@@ -33,13 +33,22 @@ func (q *FloatQueue) Dequeue() (float64, bool) {
 	return item, true
 }
 
-// Peek returns the item at the front of the queue without removing it
-func (q *FloatQueue) Peek() (float64, bool) {
+// PeekFirst returns the item at the front of the queue without removing it
+func (q *FloatQueue) PeekFirst() (float64, bool) {
 	if len(q.Items) == 0 {
 		return 0, false
 	}
 
 	return q.Items[0], true
+}
+
+// PeekLast returns the item at the end of the queue without removing it
+func (q *FloatQueue) PeekLast() (float64, bool) {
+	if len(q.Items) == 0 {
+		return 0, false
+	}
+
+	return q.Items[len(q.Items)-1], true
 }
 
 // Length returns the number of items in the queue
