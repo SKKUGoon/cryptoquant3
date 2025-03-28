@@ -5,14 +5,14 @@ import (
 	"time"
 
 	"cryptoquant.com/m/internal"
-	"cryptoquant.com/m/streams"
+	market "cryptoquant.com/m/streams/market"
 )
 
 func TestSubscribeKline(t *testing.T) {
 	t.Log("Starting Stream BTCUSDT 1m")
 	ch := make(chan internal.KlineDataStream)
 	done := make(chan struct{})
-	go streams.SubscribeKline("BTCUSDT", "1m", ch, done)
+	go market.SubscribeKline("BTCUSDT", "1m", ch, done)
 
 	// Send done signal after 10 seconds
 	go func() {
@@ -36,7 +36,7 @@ func TestSubscribeKlineMulti(t *testing.T) {
 
 	symbols := []string{"BTCUSDT", "ETHUSDT", "XRPUSDT", "DOGEUSDT", "LINKUSDT"}
 	done := make(chan struct{})
-	go streams.SubscribeKlineMulti(symbols, "1m", chMap, done)
+	go market.SubscribeKlineMulti(symbols, "1m", chMap, done)
 
 	// Send done signal after 10 seconds
 	go func() {

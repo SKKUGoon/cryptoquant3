@@ -10,7 +10,7 @@ import (
 	"cryptoquant.com/m/data"
 	"cryptoquant.com/m/internal"
 	strategy "cryptoquant.com/m/strategy/pairs"
-	"cryptoquant.com/m/streams"
+	market "cryptoquant.com/m/streams/market"
 )
 
 type Engine struct {
@@ -32,7 +32,6 @@ type Engine struct {
 	numberOfStreams     int
 	numberOfPairs       int
 	failedAssetsSymbols []string
-	failedPairsSymbols  []string
 	isTest              bool
 	isStreaming         bool
 	isCalculating       bool
@@ -238,7 +237,7 @@ func (e *Engine) StartStream() {
 		symbolGroup := symbols[i:end]
 
 		// Process each group of symbols - Multiple queires
-		go streams.SubscribeKlineMulti(symbolGroup, "1m", e.ChMap, e.done)
+		go market.SubscribeKlineMulti(symbolGroup, "1m", e.ChMap, e.done)
 		e.numberOfStreams++
 	}
 
